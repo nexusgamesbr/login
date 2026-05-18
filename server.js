@@ -740,6 +740,85 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
+// === LEADERBOARD DE MOEDAS ===
+app.get("/leaderboard/moedas", async (req, res) => {
+  try {
+    const usuarios = await Usuario.find({}, { nome: 1, moedas: 1, foto_perfil: 1, tagPersonalizada: 1, corTagPersonalizada: 1, tipoCorTag: 1, corBordaPerfil: 1, idCorBordaPerfil: 1, tempo_jogo: 1, _id: 0 })
+      .sort({ moedas: -1 })
+      .limit(10)
+      .lean();
+
+    // Distribuir prêmios baseado em moedas
+    const usuariosComPremio = usuarios.map((user, index) => {
+      let premio = 0;
+      if (index === 0) premio = 5000;
+      else if (index === 1) premio = 3000;
+      else if (index === 2) premio = 1000;
+      else if (index >= 3 && index <= 9) premio = 500;
+
+      return {
+        nome: user.nome,
+        moedas: user.moedas || 0,
+        tempo_jogo: user.tempo_jogo || 0,
+        foto_perfil: user.foto_perfil || '',
+        tagPersonalizada: user.tagPersonalizada || '',
+        corTagPersonalizada: user.corTagPersonalizada || '#a855f7',
+        tipoCorTag: user.tipoCorTag || 'comum',
+        corBordaPerfil: user.corBordaPerfil || '#ffd700',
+        idCorBordaPerfil: user.idCorBordaPerfil || 'gold',
+        premio: premio,
+        posicao: index + 1
+      };
+    });
+
+    console.log('[LEADERBOARD-MOEDAS] Retornando:', usuariosComPremio.length, 'usuários');
+    res.json({ ok: true, usuarios: usuariosComPremio });
+  } catch (err) {
+    console.error('[LEADERBOARD-MOEDAS] Erro:', err);
+    res.status(500).json({ ok: false, mensagem: "Erro ao obter leaderboard de moedas: " + err.message });
+  }
+});
+
+// === LEADERBOARD DE GIROS ===
+app.get("/leaderboard/giros", async (req, res) => {
+  try {
+    const usuarios = await Usuario.find({}, { nome: 1, spins: 1, foto_perfil: 1, tagPersonalizada: 1, corTagPersonalizada: 1, tipoCorTag: 1, corBordaPerfil: 1, idCorBordaPerfil: 1, tempo_jogo: 1, moedas: 1, _id: 0 })
+      .sort({ spins: -1 })
+      .limit(10)
+      .lean();
+
+    // Distribuir prêmios baseado em giros
+    const usuariosComPremio = usuarios.map((user, index) => {
+      let premio = 0;
+      if (index === 0) premio = 20;
+      else if (index === 1) premio = 15;
+      else if (index === 2) premio = 10;
+      else if (index >= 3 && index <= 9) premio = 5;
+
+      return {
+        nome: user.nome,
+        spins: user.spins || 0,
+        moedas: user.moedas || 0,
+        tempo_jogo: user.tempo_jogo || 0,
+        foto_perfil: user.foto_perfil || '',
+        tagPersonalizada: user.tagPersonalizada || '',
+        corTagPersonalizada: user.corTagPersonalizada || '#a855f7',
+        tipoCorTag: user.tipoCorTag || 'comum',
+        corBordaPerfil: user.corBordaPerfil || '#ffd700',
+        idCorBordaPerfil: user.idCorBordaPerfil || 'gold',
+        premio: premio,
+        posicao: index + 1
+      };
+    });
+
+    console.log('[LEADERBOARD-GIROS] Retornando:', usuariosComPremio.length, 'usuários');
+    res.json({ ok: true, usuarios: usuariosComPremio });
+  } catch (err) {
+    console.error('[LEADERBOARD-GIROS] Erro:', err);
+    res.status(500).json({ ok: false, mensagem: "Erro ao obter leaderboard de giros: " + err.message });
+  }
+});
+
 // === ENDPOINTS DE COMPRAS ===
 app.post("/registrar-compra", autenticar, async (req, res) => {
   try {
