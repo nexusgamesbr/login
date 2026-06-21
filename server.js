@@ -26,6 +26,7 @@ const Usuario = mongoose.model('Usuario', new mongoose.Schema({
   senha: String,
   moedas: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },
+  tipoAdmin: { type: String, default: null }, // null, 'admin', ou 'headAdmin'
   jogosSecretos: [String],
   itensComprados: [String],
   tempo_jogo: { type: Number, default: 0 },
@@ -270,6 +271,20 @@ function verificarAdmin(req, res, next) {
   next();
 }
 
+function verificarHeadAdmin(req, res, next) {
+  if (!req.usuario || req.usuario.tipoAdmin !== 'headAdmin') {
+    return res.status(403).json({ ok: false, mensagem: "❌ Acesso negado! Você não é um Head Admin." });
+  }
+  next();
+}
+
+function verificarYohanan(req, res, next) {
+  if (!req.usuario || req.usuario.nome !== "Yohanan") {
+    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan tem permissão para isso!" });
+  }
+  next();
+}
+
 app.post("/admin/adicionar-moedas", autenticar, verificarAdmin, async (req, res) => {
   try {
     const { nomeUsuario, quantidade } = req.body;
@@ -394,20 +409,12 @@ app.post("/admin/definir-admin", autenticar, verificarAdmin, async (req, res) =>
 
 app.get("/admin/listar-usuarios", autenticar, verificarAdmin, async (req, res) => {
   try {
-    const usuarios = await Usuario.find({}, { nome: 1, moedas: 1, isAdmin: 1, _id: 0 });
+    const usuarios = await Usuario.find({}, { nome: 1, moedas: 1, isAdmin: 1, tipoAdmin: 1, _id: 0 });
     res.json({ ok: true, usuarios });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
-
-// === ROTAS RESTRITAS APENAS PARA YOHANAN ===
-function verificarYohanan(req, res, next) {
-  if (!req.usuario || req.usuario.nome !== "Yohanan") {
-    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan tem permissão para isso!" });
-  }
-  next();
-}
 
 // === SISTEMA DE AUTORIZAÇÃO/NOTIFICAÇÕES ===
 // Criar solicitação de moedas (apenas admins)
@@ -729,6 +736,84 @@ app.post("/admin/emergencia-reset", autenticar, verificarYohanan, async (req, re
 
     console.log("[EMERGENCIA] Yohanan acionou o botão de emergência - Admins resetados!");
     res.json({ ok: true, mensagem: "🚨 Emergência acionada! Todos os admins foram removidos. Apenas Yohanan é admin agora." });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
+  }
+});
+
+// === ROTAS DE HEAD ADMIN ===
+// Promover Admin a Head Admin (apenas Yohanan)
+app.post("/admin/promover-head-admin", autenticar, verificarYohanan, async (req, res) => {
+  try {
+    const { nomeUsuario } = req.body;
+
+    const usuario = await Usuario.findOne({ nome: nomeUsuario });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensagem: "❌ Usuário não encontrado!" });
+    }
+
+    if (!usuario.isAdmin) {
+      return res.status(400).json({ ok: false, mensagem: "❌ Esse usuário não é um administrador! Promova-o primeiro." });
+    }
+
+    if (usuario.tipoAdmin === 'headAdmin') {
+      return res.status(400).json({ ok: false, mensagem: "❌ Esse usuário já é um Head Admin!" });
+    }
+
+    usuario.tipoAdmin = 'headAdmin';
+    await usuario.save();
+
+    console.log(`[HEAD-ADMIN] Yohanan promoveu ${nomeUsuario} a Head Admin!`);
+    res.json({ ok: true, mensagem: `✅ ${nomeUsuario} agora é um Head Admin! 👑` });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
+  }
+});
+
+// Rebaixar Head Admin para Admin (apenas Yohanan)
+app.post("/admin/rebaixar-head-admin", autenticar, verificarYohanan, async (req, res) => {
+  try {
+    const { nomeUsuario } = req.body;
+
+    const usuario = await Usuario.findOne({ nome: nomeUsuario });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensagem: "❌ Usuário não encontrado!" });
+    }
+
+    if (usuario.tipoAdmin !== 'headAdmin') {
+      return res.status(400).json({ ok: false, mensagem: "❌ Esse usuário não é um Head Admin!" });
+    }
+
+    usuario.tipoAdmin = 'admin';
+    await usuario.save();
+
+    console.log(`[HEAD-ADMIN] Yohanan rebaixou ${nomeUsuario} de Head Admin para Admin!`);
+    res.json({ ok: true, mensagem: `✅ ${nomeUsuario} foi rebaixado para Admin!` });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
+  }
+});
+
+// Remover Head Admin (apenas Yohanan)
+app.post("/admin/remover-head-admin", autenticar, verificarYohanan, async (req, res) => {
+  try {
+    const { nomeUsuario } = req.body;
+
+    const usuario = await Usuario.findOne({ nome: nomeUsuario });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensagem: "❌ Usuário não encontrado!" });
+    }
+
+    if (usuario.tipoAdmin !== 'headAdmin') {
+      return res.status(400).json({ ok: false, mensagem: "❌ Esse usuário não é um Head Admin!" });
+    }
+
+    usuario.isAdmin = false;
+    usuario.tipoAdmin = null;
+    await usuario.save();
+
+    console.log(`[HEAD-ADMIN] Yohanan removeu ${nomeUsuario} como Head Admin!`);
+    res.json({ ok: true, mensagem: `✅ ${nomeUsuario} deixou de ser Head Admin!` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
