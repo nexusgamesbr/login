@@ -241,6 +241,14 @@ app.get("/carregarBackup", autenticar, async (req, res) => {
       };
     }
 
+    // 4. Preserva achievements e unlockedGames (CORREÇÃO DO BUG)
+    if (!dadosRetorno.achievements) {
+      dadosRetorno.achievements = [];
+    }
+    if (!dadosRetorno.unlockedGames) {
+      dadosRetorno.unlockedGames = [];
+    }
+
     const tamanho = JSON.stringify(dadosRetorno).length;
     console.log(`[RESTORE] Usuário ${req.usuario.nome} - ${(tamanho/1024).toFixed(2)}KB`);
 
