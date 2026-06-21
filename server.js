@@ -222,38 +222,29 @@ app.get("/carregarBackup", autenticar, async (req, res) => {
       return res.json({ ok: false, dados: null, mensagem: "Nenhum backup encontrado." });
     }
 
-    // Transforma em objeto puro para garantir o acesso às propriedades dinâmicas
+    // 1. Converte o documento do Mongoose para um objeto JS puro
     const backupPuro = backup.toObject();
     
-    // De acordo com o MongoDB Compass, o próprio 'backupPuro.dados' contém a estrutura direto:
-    const raizDoBackup = backupPuro.dados || {};
+    // 2. 'backupPuro.dados' já contém exatamente a estrutura correta (com achievements, unlockedGames, etc.)
+    const dadosRetorno = backupPuro.dados;
 
-    // Mapeia o retorno exatamente como o MongoDB está estruturado na imagem
-    const dadosRetorno = {
-      // Se por acaso as moedas/playtime estiverem em uma subchave chamada 'dados', mantemos o fallback,
-      // caso contrário, puxamos as chaves simples que estão soltas na raiz (como userPlaytime, userTag, etc)
-      dados: raizDoBackup.dados || {
-        userCoins: raizDoBackup.userCoins,
-        userPlaytime: raizDoBackup.userPlaytime,
-        userTag: raizDoBackup.userTag,
-        userTagColor: raizDoBackup.userTagColor,
-        userTagColorType: raizDoBackup.userTagColorType,
-        userProfilePic: raizDoBackup.userProfilePic,
-        lastDailyRewardDate: raizDoBackup.lastDailyRewardDate
-      },
-      // CORREÇÃO CRÍTICA: Busca direto na raiz de onde estão no banco!
-      achievements: raizDoBackup.achievements || [],
-      unlockedGames: raizDoBackup.unlockedGames || [],
-      purchasedItems: raizDoBackup.purchasedItems || [],
-      purchasedItemsSpamton: raizDoBackup.purchasedItemsSpamton || [],
-      preferences: raizDoBackup.preferences || {},
-      timestamp: raizDoBackup.timestamp || backup.atualizadoEm.toISOString()
-    };
+    // 3. Garante que se o front-end antigo procurar por dadosBackup.dados, ele não quebre:
+    if (!dadosRetorno.dados) {
+      dadosRetorno.dados = {
+        userCoins: dadosRetorno.userCoins,
+        userPlaytime: dadosRetorno.userPlaytime,
+        userTag: dadosRetorno.userTag,
+        userTagColor: dadosRetorno.userTagColor,
+        userTagColorType: dadosRetorno.userTagColorType,
+        userProfilePic: dadosRetorno.userProfilePic,
+        lastDailyRewardDate: dadosRetorno.lastDailyRewardDate
+      };
+    }
 
     const tamanho = JSON.stringify(dadosRetorno).length;
     console.log(`[RESTORE] Usuário ${req.usuario.nome} - ${(tamanho/1024).toFixed(2)}KB`);
 
-    // Retorna para o front-end
+    // Envia o objeto completo direto do banco sem filtros que quebrem as chaves
     res.json({ ok: true, dados: dadosRetorno });
   } catch (err) {
     console.error("Erro ao carregar backup:", err);
