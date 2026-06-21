@@ -36,12 +36,6 @@ const Usuario = mongoose.model('Usuario', new mongoose.Schema({
   foto_perfil: { type: String, default: '' },
   corBordaPerfil: { type: String, default: '#ffd700' }, // cor da borda do perfil
   idCorBordaPerfil: { type: String, default: 'gold' }, // id da cor de borda selecionada
-  lootboxes: {
-    comum: { type: Number, default: 0 },
-    rara: { type: Number, default: 0 },
-    epica: { type: Number, default: 0 },
-    lendaria: { type: Number, default: 0 }
-  }
 }));
 
 // Modelo Backup
@@ -228,19 +222,25 @@ app.get("/carregarBackup", autenticar, async (req, res) => {
       return res.json({ ok: false, dados: null, mensagem: "Nenhum backup encontrado." });
     }
 
-    // Retornar estrutura otimizada
+    // CORREÇÃO: Transforma o documento do Mongoose em um objeto JS puro para podermos acessar as chaves dinâmicas com segurança
+    const backupPuro = backup.toObject();
+    const conteudoDados = backupPuro.dados || {};
+
+    // Retornar estrutura otimizada extraindo do objeto puro
     const dadosRetorno = {
-      dados: backup.dados.dados || {},
-      achievements: backup.dados.achievements || [],
-      unlockedGames: backup.dados.unlockedGames || [],
-      purchasedItems: backup.dados.purchasedItems || [],
-      preferences: backup.dados.preferences || {},
-      timestamp: backup.dados.timestamp || backup.atualizadoEm.toISOString()
+      dados: conteudoDados.dados || {},
+      achievements: conteudoDados.achievements || [],
+      unlockedGames: conteudoDados.unlockedGames || [],
+      purchasedItems: conteudoDados.purchasedItems || [],
+      purchasedItemsSpamton: conteudoDados.purchasedItemsSpamton || [], // Lembrar de adicionar a loja do Spamton aqui também!
+      preferences: conteudoDados.preferences || {},
+      timestamp: conteudoDados.timestamp || backup.atualizadoEm.toISOString()
     };
 
     const tamanho = JSON.stringify(dadosRetorno).length;
     console.log(`[RESTORE] Usuário ${req.usuario.nome} - ${(tamanho/1024).toFixed(2)}KB`);
 
+    // Retorna a estrutura limpa para o front-end
     res.json({ ok: true, dados: dadosRetorno });
   } catch (err) {
     console.error("Erro ao carregar backup:", err);
