@@ -43,15 +43,25 @@
       border-color: #585858;
       outline: none;
     }
-    button {
+    .enter {
       width: 30%;
       padding: 12px;
       margin-top: 10px;
       margin-left: 220px;
       border-radius: 6px;
-      border: none;
-      background-image: url("dark_grey.jpg");
-      border-image: url("button2.svg") 10 stretch;
+      background-image: url("bg.png");
+      border-image: url("button2.svg") 10 stretch ;
+      border: 0.0625rem solid transparent;
+      box-shadow: black 0px 0px 0.3rem 0.1rem inset;
+      border-radius: 0.4375rem 0.4375rem 0.4375rem 0px;
+    border-top-left-radius: 0.4375rem;
+    border-top-right-radius: 0.4375rem;
+    border-bottom-right-radius: 0.4375rem;
+    border-bottom-left-radius: 0px;
+    border-image-width: 0.50rem;
+    border-image-slice: 10;
+    border-image-repeat: unset;
+    border-image-source: url(button2.svg);
       color: #fff;
       font-size: 16px;
       cursor: pointer;
@@ -65,8 +75,8 @@
         font-family: "fonte2";
         src: url(fonte2.woff2) format("woff2");
     }
-    button:hover {
-      background: #201c22;
+    .enter:hover {
+      transform: scale(1.10);
     }
     .toggle {
       margin-top: 15px;
@@ -102,7 +112,8 @@
     }
     .MainButton {
     position: absolute;
-    color: #f0f0f0;
+    color: #cdcdcd;
+    text-shadow: 0 0 10px rgb(0, 0, 0);
     top: -2.05rem;
     font-family: "fonte2";
     left: 50%;
@@ -117,6 +128,7 @@
     -webkit-box-pack: center;
     justify-content: center;
     -webkit-box-align: center;
+    box-shadow: rgb(0, 0, 0) 0px 0px 1.3rem 0.1rem inset;
     align-items: center;
     background: url("dark_grey.jpg") padding-box padding-box, linear-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0.5) 100%) border-box border-box;
     border-radius: 0.4375rem 0.4375rem 0.4375rem 0px;
@@ -180,15 +192,32 @@
       opacity: 0;
       pointer-events: none;
     }
-    
+    #hide {
+      top: 48.5%;
+      right: 40.6%;
+      padding: 10px;
+      background-repeat: no-repeat;
+      position: absolute;
+      z-index: 999;
+      background: transparent;
+      border: none;
+      transform: scale(1.05);
+    }
+    #hide:hover{
+      transform: scale(1.15);
+    }
   </style>
 </head>
 <body>
-  <div id="loading" class="loading">
-    <img class="main-img" src="image.png" alt="Carregando...">
+  <!-- <div id="loading" class="loading">
+    <img class="main-img" src="imagens/image.png" alt="Carregando...">
     <img class="loading-img" src="loading.gif" alt="Carregando...">
+  </div> -->
+  <div>
+   <button id="hide" onclick="toggleVisible()">
+    <img class="hide-img" src="imagens/show.png" alt="asd">
   </div>
-  
+
   <div class="container">
     <!-- Formulário de Login -->
     <div class="MainButton"><strong>ENTRAR</strong></div>
@@ -196,11 +225,10 @@
       <div class="toggle" onclick="toggleForms()">Não tem conta? Cadastre-se</div>
       <form id="loginForm" action="/login" method="POST" onsubmit="return false;">
         <input type="text" name="nome" placeholder="Nome" required>
-        <input type="password" name="senha" placeholder="Senha" required>
-        <button type="submit">Entrar</button>
+        <input id="senhaaa" type="password" name="senha" placeholder="Senha" required>
+        <button class="enter" type="submit">Entrar</button>
       </form>
-      
-    </div>
+  </div>
 
     <!-- Formulário de Cadastro -->
     <div id="registerSection" class="hidden">
@@ -208,8 +236,9 @@
       <div class="toggle" onclick="toggleForms()">Já tem conta? Faça login</div>
       <form id="criarForm" action="/registrar" method="POST" onsubmit="return false;">
         <input type="text" name="nome" placeholder="Nome" required>
-        <input type="password" name="senha" placeholder="Senha" required>
-        <button type="submit">Registrar</button>
+        <input id="senhaaa" type="password" name="senha" placeholder="Senha" required>
+        <input id="senhaaa" type="password" name="confirmarsenha" placeholder="Confirmar Senha" required>
+        <button class="enter" type="submit">Registrar</button>
       </form>
       
     </div>
@@ -219,38 +248,248 @@
 
   <script>
     // Menu de carregamento
-    const loadingScreen = document.getElementById("loading");
-    const container = document.querySelector(".container");
+    // const loadingScreen = document.getElementById("loading");
+    // const container = document.querySelector(".container");
 
-    // Container começa invisível
-    container.classList.add("hidden");
+    // // Container começa invisível
+    // container.classList.add("hidden");
 
-    // Após 5 segundos, esconder o loading e mostrar o container
-    setTimeout(() => {
-      loadingScreen.classList.add("hidden");
-      container.classList.remove("hidden");
-    }, 6000);
+    // // Após 5 segundos, esconder o loading e mostrar o container
+    // setTimeout(() => {
+    //   loadingScreen.classList.add("hidden");
+    //   container.classList.remove("hidden");
+    // }, 6000);
 
     function toggleForms() {
       document.getElementById("loginSection").classList.toggle("hidden");
       document.getElementById("registerSection").classList.toggle("hidden");
     }
 
-    // Sistema de aleatorização de main-img
-    const images = ["image.png", "image2.png", "image3.png", "image4.png", "image5.png", "image6.png", "image7.png", "image8.png", "image9.png", "image10.png", "image11.png", "image12.png", "image13.png", "image14.png", "image15.png", "image16.png"];
-    const mainImgElement = document.querySelector(".main-img");
-
-    function getRandomImage() {
-      return images[Math.floor(Math.random() * images.length)];
+    function toggleVisible() {
+      const hide = document.querySelector(".hide-img");
+      const input = document.getElementById("senhaaa");
+      if (hide.src.includes('show.png')) {
+        hide.src = 'imagens/hide.png'
+        input.type = "text"
+      } else {
+        hide.src = 'imagens/show.png'
+        input.type = "password"
+      }
     }
 
-    // Muda a imagem a cada 2 segundos
-    setInterval(() => {
-      mainImgElement.src = getRandomImage();
-    }, 2000);
+function submitAnimation() {
+  const frameWidth = 200; // largura de CADA frame
+  const frameHeight = 200; // altura de CADA frame
+  const totalFrames = 17; // número total de frames
+  const animationDuration = 500; // duração total em ms
+  const frameDuration = animationDuration / totalFrames; // tempo de cada frame
+
+  const srcDaSprite = "imagens/fire.png";
+
+  // 1. Pré-carregamento do Áudio usando Promise
+  const audio = new Audio('hit.mp3');
+  audio.load();
+  const carregarAudio = new Promise((resolve) => {
+    audio.addEventListener('canplaythrough', () => resolve(), { once: true });
+  });
+
+  // 2. Pré-carregamento da Imagem usando Promise
+  const imgPrecarregada = new Image();
+  const carregarImagem = new Promise((resolve, reject) => {
+    imgPrecarregada.onload = () => resolve();
+    imgPrecarregada.onerror = () => reject(new Error("Erro ao carregar a sprite do fogo."));
+    imgPrecarregada.src = srcDaSprite;
+  });
+
+  // 3. Aguarda ambos carregarem antes de executar a ação
+  Promise.all([carregarAudio, carregarImagem])
+    .then(() => {
+      // Toca o áudio imediatamente
+      audio.play();
+
+      // Cria a imagem da animação na tela
+      const animationImg = document.createElement("img");
+      animationImg.src = srcDaSprite;
+      animationImg.style.position = "absolute";
+      animationImg.style.width = frameWidth + "px";
+      animationImg.style.height = frameHeight + "px";
+      animationImg.style.left = "80%";
+      animationImg.style.top = "80%";
+      animationImg.style.transform = "translate(-50%, -50%)"; // Centraliza perfeitamente
+      animationImg.style.objectFit = "cover"; // Garante que o frame corte no tamanho certo
+      animationImg.style.zIndex = "1000"; // Garante que fique acima de outros elementos
+
+      // Adiciona a imagem DENTRO do botão
+      const botaoEnter = document.querySelector('.enter');
+      if (botaoEnter) {
+        botaoEnter.appendChild(animationImg);
+      }
+
+      let currentFrame = 0;
+
+      // Loop da animação
+      const animationInterval = setInterval(() => {
+        if (currentFrame >= totalFrames) {
+          clearInterval(animationInterval); // Para a animação no último frame
+          animationImg.remove(); // Remove o elemento da tela após o fim
+          return;
+        }
+
+        // Move a posição da imagem para mostrar o próximo frame
+        const xPosition = -(currentFrame * frameWidth);
+        animationImg.style.objectPosition = `${xPosition}px 0px`;
+
+        currentFrame++;
+      }, frameDuration);
+    })
+    .catch((erro) => {
+      console.error("Falha ao iniciar animação:", erro);
+    });
+}
+
+// Railgun
+// Adiciona o evento de clique no background (mude para document.body ou o seletor da sua div de fundo)
+document.addEventListener('click', (elemento) => {
+  // Evita disparar se o usuário clicar em cima de um botão ou outro elemento interativo
+  if (elemento.target !== document.body && !elemento.target.classList.contains('background')) {
+    return; 
+  }
+
+  const cliqueX = elemento.clientX;
+  const cliqueY = elemento.clientY;
+
+  executarEfeitoClique(cliqueX, cliqueY);
+});
+let playing = false; // Variável para controlar se o efeito está aconteceno
+function executarEfeitoClique(x, y) {
+ if (playing) return; // Se já estiver tocando, não faz nada
+  playing = true; // Marca que o efeito começou
+  const frameWidth = 128; // largura de CADA frame
+  const frameHeight = 128; // altura de CADA frame
+  const totalFrames = 11; // número total de frames
+  const animationDuration = 500; // duração total da animação em ms
+  const frameDuration = animationDuration / totalFrames;
+  const tempoEsperaAnimacao = 1060; // tempo em ms para a animação começar APÓS o áudio
+  const tempoFadeDecal = 10000; // tempo que a imagem 'decal' leva para sumir (2 segundos)
+
+  const srcDaSprite = "imagens/rings.png";
+  const srcDecal = "imagens/decal.png";
+
+  // 1. Pré-carregamento do Áudio
+  const audio = new Audio('railgun.mp3');
+  audio.load();
+  const carregarAudio = new Promise((resolve) => {
+    audio.addEventListener('canplaythrough', () => resolve(), { once: true });
+  });
+
+  // 2. Pré-carregamento da Imagem da animação
+  const imgPrecarregada = new Image();
+  const carregarImagem = new Promise((resolve, reject) => {
+    imgPrecarregada.onload = () => resolve();
+    imgPrecarregada.onerror = () => reject(new Error("Erro ao carregar a sprite do fogo."));
+    imgPrecarregada.src = srcDaSprite;
+  });
+
+  // 3. Pré-carregamento da Imagem Decal
+  const imgDecalPre = new Image();
+  const carregarDecal = new Promise((resolve, reject) => {
+    imgDecalPre.onload = () => resolve();
+    imgDecalPre.onerror = () => reject(new Error("Erro ao carregar decal.png"));
+    imgDecalPre.src = srcDecal;
+  });
+
+  // 3. Executa após o carregamento de ambos
+  Promise.all([carregarAudio, carregarImagem, carregarDecal])
+    .then(() => {
+      // Toca o áudio IMEDIATAMENTE
+      audio.play();
+
+      // Aguda o "certo tempo" com o áudio ainda rolando para soltar a animação
+      setTimeout(() => {
+        // --- CRIANDO A IMAGEM DECAL (A que vai sumir) ---
+        const decalImg = document.createElement("img");
+        decalImg.src = srcDecal;
+        decalImg.style.position = "fixed";
+        decalImg.style.left = `${x}px`;
+        decalImg.style.top = `${y}px`;
+        decalImg.style.transform = "translate(-50%, -50%)"; // Centraliza no clique
+        decalImg.style.zIndex = "999"; // Fica logo abaixo da animação de fogo
+        decalImg.style.pointerEvents = "none";
+        
+        // Configura o Fade Out do Decal
+        decalImg.style.transition = `opacity ${tempoFadeDecal}ms ease-out`;
+        decalImg.style.opacity = "1";
+        
+        document.body.appendChild(decalImg);
+
+        // Inicia o efeito de sumir do decal no próximo frame do navegador
+        requestAnimationFrame(() => {
+          decalImg.style.opacity = "0";
+        });
+
+        // Remove o decal do HTML após terminar o tempo do fade
+        setTimeout(() => {
+          decalImg.remove();
+        }, tempoFadeDecal);
+
+        // Cria a imagem da animação
+        const animationImg = document.createElement("img");
+        animationImg.src = srcDaSprite;
+        
+        // Estilização dinâmica baseada na posição do clique
+        animationImg.style.position = "fixed";
+        animationImg.style.left = `${x}px`;
+        animationImg.style.top = `${y}px`;
+        animationImg.style.width = frameWidth + "px";
+        animationImg.style.height = frameHeight + "px";
+        animationImg.style.transform = "translate(-50%, -50%)"; // Centraliza no ponto exato do clique
+        animationImg.style.objectFit = "cover";
+        animationImg.style.zIndex = "1000";
+        animationImg.style.pointerEvents = "none"; // Impede que a imagem mude o alvo de cliques futuros
+        
+        // Adiciona o elemento direto no corpo da página
+        document.body.appendChild(animationImg);
+
+        let currentFrame = 0;
+
+        // Loop da animação da Sprite Sheet
+        const animationInterval = setInterval(() => {
+          if (currentFrame >= totalFrames) {
+            clearInterval(animationInterval);
+            animationImg.remove(); // Remove do HTML quando invisível/finalizado
+            playing = false; // Marca que o efeito terminou
+            return;
+          }
+
+          // Move a posição da imagem para mostrar o próximo frame
+          const xPosition = -(currentFrame * frameWidth);
+          animationImg.style.objectPosition = `${xPosition}px 0px`;
+
+          currentFrame++;
+        }, frameDuration);
+        }, tempoEsperaAnimacao); // Tempo de atraso configurado na variável acima
+    })
+    .catch((erro) => {
+      console.error("Falha ao iniciar o efeito visual:", erro);
+    });
+
+}
+
+    // Sistema de aleatorização de main-img
+    // const images = ["image.png", "image2.png", "image3.png", "image4.png", "image5.png", "image6.png", "image7.png", "image8.png", "image9.png", "image10.png", "image11.png", "image12.png", "image13.png", "image14.png", "image15.png", "image16.png"];
+    // const mainImgElement = document.querySelector(".main-img");
+
+    // function getRandomImage() {
+    //   return images[Math.floor(Math.random() * images.length)];
+    // }
+
+    // // Muda a imagem a cada 2 segundos
+    // setInterval(() => {
+    //  mainImgElement.src = `imagens/` + `getRandomImage();`
+    // }, 2000);
 
     // Muda a primeira imagem imediatamente
-    mainImgElement.src = getRandomImage();
+    // mainImgElement.src = getRandomImage();
   </script>
   <script>
   const API_URL = "https://login-nqot.onrender.com";
@@ -260,6 +499,12 @@ document.getElementById("criarForm").addEventListener("submit", async e => {
   e.preventDefault();
   const nome = e.target.nome.value.trim();
   const senha = e.target.senha.value;
+  const confsenha = e.target.confirmarsenha.value;
+  if (senha === confsenha) {} else {
+    alert("A Senha não coincide!")
+    return;
+  }
+  submitAnimation();
   const resposta = await enviarDados(`${API_URL}/registrar`, { nome, senha });
 
   alert(resposta.mensagem || resposta);
@@ -293,6 +538,7 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
 });
 
 
+
 // Função auxiliar
 async function enviarDados(url, dados) {
   const res = await fetch(url, {
@@ -307,8 +553,17 @@ async function enviarDados(url, dados) {
 
   // Mostrar quem está logado (sem alert)
   const usuario = localStorage.getItem("usuarioLogado");
-  if (usuario) {
-    document.body.insertAdjacentHTML("beforeend", `<p>Usuário logado: ${usuario}</p>`);
+  const token = localStorage.getItem("token")
+  if (usuario && token) {
+    const boolean = confirm("Parece que você já está logado, quer sair?")
+    if (boolean == true) {
+      localStorage.clear()
+    } else if (boolean == false) {
+      window.location.href = "https://neeexusbr.github.io/games"
+    }
+  } else {
+   localStorage.clear("usuarioLogado")
+   localStorage.clear("token")
   }
 </script>
 
