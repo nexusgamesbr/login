@@ -810,7 +810,7 @@ app.post("/admin/remover-head-admin", autenticar, verificarYohanan, async (req, 
 // === ENDPOINTS DE LEADERBOARD ===
 app.get("/leaderboard", async (req, res) => {
   try {
-    const usuarios = await Usuario.find({}, { nome: 1, tempo_jogo: 1, moedas: 1, foto_perfil: 1, tagPersonalizada: 1, corTagPersonalizada: 1, tipoCorTag: 1, corBordaPerfil: 1, idCorBordaPerfil: 1, rank: 1, _id: 0 })
+    const usuarios = await Usuario.find({}, { nome: 1, tempo_jogo: 1, moedas: 1, foto_perfil: 1, tagPersonalizada: 1, corTagPersonalizada: 1, tipoCorTag: 1, corBordaPerfil: 1, idCorBordaPerfil: 1, rank: 1, itensComprados: 1, _id: 0 })
       .sort({ tempo_jogo: -1 })
       .limit(10)
       .lean(); // Converter para objeto puro do JavaScript
@@ -834,6 +834,7 @@ app.get("/leaderboard", async (req, res) => {
         corBordaPerfil: user.corBordaPerfil || '#ffd700',
         idCorBordaPerfil: user.idCorBordaPerfil || 'gold',
         rank: user.rank || 1,
+        hasPremium: !!(user.itensComprados && user.itensComprados.includes('premium-xp')),
         premio: premio,
         posicao: index + 1
       };
