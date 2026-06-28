@@ -278,9 +278,9 @@ function verificarHeadAdmin(req, res, next) {
   next();
 }
 
-function verificarYohanan(req, res, next) {
-  if (!req.usuario || req.usuario.nome !== "Yohanan") {
-    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan tem permissão para isso!" });
+function verificarDogue(req, res, next) {
+  if (!req.usuario || req.usuario.nome !== "Dogue") {
+    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Dogue tem permissão para isso!" });
   }
   next();
 }
@@ -294,12 +294,12 @@ app.post("/admin/adicionar-moedas", autenticar, verificarAdmin, async (req, res)
       return res.status(404).json({ ok: false, mensagem: "Usuário não encontrado!" });
     }
 
-    // Se for Yohanan (dono), adiciona direto sem aprovação
-    if (req.usuario.nome === "Yohanan") {
+    // Se for Dogue (dono), adiciona direto sem aprovação
+    if (req.usuario.nome === "Dogue") {
       usuario.moedas = (usuario.moedas || 0) + quantidade;
       await usuario.save();
       
-      console.log(`[MOEDAS-DIRETO] Yohanan adicionou ${quantidade} moedas direto a ${nomeUsuario}`);
+      console.log(`[MOEDAS-DIRETO] Dogue adicionou ${quantidade} moedas direto a ${nomeUsuario}`);
       return res.json({ ok: true, mensagem: `✅ ${quantidade} moedas adicionadas direto a ${nomeUsuario}!` });
     }
     
@@ -373,9 +373,9 @@ app.post("/admin/adicionar-item", autenticar, verificarAdmin, async (req, res) =
 });
 
 app.post("/admin/definir-admin", autenticar, verificarAdmin, async (req, res) => {
-  // Apenas Yohanan pode promover admins
-  if (!req.usuario || req.usuario.nome !== "Yohanan") {
-    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan pode promover admins!" });
+  // Apenas Dogue pode promover admins
+  if (!req.usuario || req.usuario.nome !== "Dogue") {
+    return res.status(403).json({ ok: false, mensagem: "❌ Apenas Dogue pode promover admins!" });
   }
 
   try {
@@ -448,9 +448,9 @@ app.post("/criar-solicitacao-moedas", autenticar, verificarAdmin, async (req, re
 // Listar solicitações pendentes (notificações)
 app.get("/minhas-solicitacoes", autenticar, async (req, res) => {
   try {
-    // Apenas Yohanan pode ver as solicitações
-    if (req.usuario.nome !== "Yohanan") {
-      return res.status(403).json({ ok: false, mensagem: "Apenas Yohanan pode visualizar solicitações!" });
+    // Apenas Dogue pode ver as solicitações
+    if (req.usuario.nome !== "Dogue") {
+      return res.status(403).json({ ok: false, mensagem: "Apenas Dogue pode visualizar solicitações!" });
     }
 
     const solicitacoesPendentes = await Solicitacao.find(
@@ -471,8 +471,8 @@ app.get("/minhas-solicitacoes", autenticar, async (req, res) => {
 // Contar solicitações pendentes (para badge de notificação)
 app.get("/api/solicitacoes-pendentes", autenticar, async (req, res) => {
   try {
-    // Apenas Yohanan (admin) pode ver as notificações
-    if (req.usuario.nome !== "Yohanan") {
+    // Apenas Dogue (admin) pode ver as notificações
+    if (req.usuario.nome !== "Dogue") {
       return res.json({ ok: true, count: 0 });
     }
 
@@ -492,9 +492,9 @@ app.get("/api/solicitacoes-pendentes", autenticar, async (req, res) => {
 // Listar histórico de solicitações
 app.get("/historico-solicitacoes", autenticar, async (req, res) => {
   try {
-    // Apenas Yohanan pode ver o histórico
-    if (req.usuario.nome !== "Yohanan") {
-      return res.status(403).json({ ok: false, mensagem: "Apenas Yohanan pode visualizar histórico!" });
+    // Apenas Dogue pode ver o histórico
+    if (req.usuario.nome !== "Dogue") {
+      return res.status(403).json({ ok: false, mensagem: "Apenas Dogue pode visualizar histórico!" });
     }
 
     const solicitacoes = await Solicitacao.find(
@@ -512,7 +512,7 @@ app.get("/historico-solicitacoes", autenticar, async (req, res) => {
 });
 
 // Aprovar solicitação
-app.post("/aprovar-solicitacao", autenticar, verificarYohanan, async (req, res) => {
+app.post("/aprovar-solicitacao", autenticar, verificarDogue, async (req, res) => {
   try {
     const { solicitacaoId } = req.body;
 
@@ -554,7 +554,7 @@ app.post("/aprovar-solicitacao", autenticar, verificarYohanan, async (req, res) 
 });
 
 // Rejeitar solicitação
-app.post("/rejeitar-solicitacao", autenticar, verificarYohanan, async (req, res) => {
+app.post("/rejeitar-solicitacao", autenticar, verificarDogue, async (req, res) => {
   try {
     const { solicitacaoId, motivo } = req.body;
 
@@ -585,14 +585,14 @@ app.post("/rejeitar-solicitacao", autenticar, verificarYohanan, async (req, res)
   }
 });
 
-// Remover Admin (apenas Yohanan)
-app.post("/admin/remover-admin", autenticar, verificarYohanan, async (req, res) => {
+// Remover Admin (apenas Dogue)
+app.post("/admin/remover-admin", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario } = req.body;
 
-    // Proteção para não remover Yohanan
-    if (nomeUsuario === "Yohanan") {
-      return res.status(403).json({ ok: false, mensagem: "❌ Você não pode remover admin de Yohanan!" });
+    // Proteção para não remover Dogue
+    if (nomeUsuario === "Dogue") {
+      return res.status(403).json({ ok: false, mensagem: "❌ Você não pode remover admin de Dogue!" });
     }
 
     const usuario = await Usuario.findOne({ nome: nomeUsuario });
@@ -613,8 +613,8 @@ app.post("/admin/remover-admin", autenticar, verificarYohanan, async (req, res) 
   }
 });
 
-// Mudar Tag de Usuário (apenas Yohanan)
-app.post("/admin/mudar-tag-usuario", autenticar, verificarYohanan, async (req, res) => {
+// Mudar Tag de Usuário (apenas Dogue)
+app.post("/admin/mudar-tag-usuario", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario, novaTag } = req.body;
 
@@ -630,15 +630,15 @@ app.post("/admin/mudar-tag-usuario", autenticar, verificarYohanan, async (req, r
     usuario.tagPersonalizada = novaTag;
     await usuario.save();
 
-    console.log(`[TAG-ADMIN] Yohanan alterou a tag de ${nomeUsuario} para: ${novaTag}`);
+    console.log(`[TAG-ADMIN] Dogue alterou a tag de ${nomeUsuario} para: ${novaTag}`);
     res.json({ ok: true, mensagem: `✅ Tag de ${nomeUsuario} alterada para: ${novaTag}` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
 
-// Mudar Foto de Perfil de Usuário (apenas Yohanan)
-app.post("/admin/mudar-foto-usuario", autenticar, verificarYohanan, async (req, res) => {
+// Mudar Foto de Perfil de Usuário (apenas Dogue)
+app.post("/admin/mudar-foto-usuario", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario, novaFoto } = req.body;
 
@@ -654,7 +654,7 @@ app.post("/admin/mudar-foto-usuario", autenticar, verificarYohanan, async (req, 
     usuario.foto_perfil = novaFoto;
     await usuario.save();
 
-    console.log(`[PHOTO-ADMIN] Yohanan alterou a foto de ${nomeUsuario}`);
+    console.log(`[PHOTO-ADMIN] Dogue alterou a foto de ${nomeUsuario}`);
     res.json({ ok: true, mensagem: `✅ Foto de ${nomeUsuario} atualizada!` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
@@ -709,29 +709,29 @@ app.post("/admin/mudar-cor-borda-usuario", autenticar, verificarAdmin, async (re
   }
 });
 
-// Botão de Emergência - Resetar Admins (apenas Yohanan)
-app.post("/admin/emergencia-reset", autenticar, verificarYohanan, async (req, res) => {
+// Botão de Emergência - Resetar Admins (apenas Dogue)
+app.post("/admin/emergencia-reset", autenticar, verificarDogue, async (req, res) => {
   try {
     // Remover admin de todos os usuários
     await Usuario.updateMany({}, { isAdmin: false });
 
-    // Definir Yohanan como único admin
-    const yohanan = await Usuario.findOne({ nome: "Yohanan" });
-    if (yohanan) {
-      yohanan.isAdmin = true;
-      await yohanan.save();
+    // Definir Dogue como único admin
+    const Dogue = await Usuario.findOne({ nome: "Dogue" });
+    if (Dogue) {
+      Dogue.isAdmin = true;
+      await Dogue.save();
     }
 
-    console.log("[EMERGENCIA] Yohanan acionou o botão de emergência - Admins resetados!");
-    res.json({ ok: true, mensagem: "🚨 Emergência acionada! Todos os admins foram removidos. Apenas Yohanan é admin agora." });
+    console.log("[EMERGENCIA] Dogue acionou o botão de emergência - Admins resetados!");
+    res.json({ ok: true, mensagem: "🚨 Emergência acionada! Todos os admins foram removidos. Apenas Dogue é admin agora." });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
 
 // === ROTAS DE HEAD ADMIN ===
-// Promover Admin a Head Admin (apenas Yohanan)
-app.post("/admin/promover-head-admin", autenticar, verificarYohanan, async (req, res) => {
+// Promover Admin a Head Admin (apenas Dogue)
+app.post("/admin/promover-head-admin", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario } = req.body;
 
@@ -751,15 +751,15 @@ app.post("/admin/promover-head-admin", autenticar, verificarYohanan, async (req,
     usuario.tipoAdmin = 'headAdmin';
     await usuario.save();
 
-    console.log(`[HEAD-ADMIN] Yohanan promoveu ${nomeUsuario} a Head Admin!`);
+    console.log(`[HEAD-ADMIN] Dogue promoveu ${nomeUsuario} a Head Admin!`);
     res.json({ ok: true, mensagem: `✅ ${nomeUsuario} agora é um Head Admin! 👑` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
 
-// Rebaixar Head Admin para Admin (apenas Yohanan)
-app.post("/admin/rebaixar-head-admin", autenticar, verificarYohanan, async (req, res) => {
+// Rebaixar Head Admin para Admin (apenas Dogue)
+app.post("/admin/rebaixar-head-admin", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario } = req.body;
 
@@ -775,15 +775,15 @@ app.post("/admin/rebaixar-head-admin", autenticar, verificarYohanan, async (req,
     usuario.tipoAdmin = 'admin';
     await usuario.save();
 
-    console.log(`[HEAD-ADMIN] Yohanan rebaixou ${nomeUsuario} de Head Admin para Admin!`);
+    console.log(`[HEAD-ADMIN] Dogue rebaixou ${nomeUsuario} de Head Admin para Admin!`);
     res.json({ ok: true, mensagem: `✅ ${nomeUsuario} foi rebaixado para Admin!` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
 
-// Remover Head Admin (apenas Yohanan)
-app.post("/admin/remover-head-admin", autenticar, verificarYohanan, async (req, res) => {
+// Remover Head Admin (apenas Dogue)
+app.post("/admin/remover-head-admin", autenticar, verificarDogue, async (req, res) => {
   try {
     const { nomeUsuario } = req.body;
 
@@ -800,7 +800,7 @@ app.post("/admin/remover-head-admin", autenticar, verificarYohanan, async (req, 
     usuario.tipoAdmin = null;
     await usuario.save();
 
-    console.log(`[HEAD-ADMIN] Yohanan removeu ${nomeUsuario} como Head Admin!`);
+    console.log(`[HEAD-ADMIN] Dogue removeu ${nomeUsuario} como Head Admin!`);
     res.json({ ok: true, mensagem: `✅ ${nomeUsuario} deixou de ser Head Admin!` });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
@@ -1421,12 +1421,12 @@ app.put("/user/spins", autenticar, async (req, res) => {
   }
 });
 
-// Adicionar giros a um usuário (apenas Yohanan)
+// Adicionar giros a um usuário (apenas Dogue)
 app.post("/admin/adicionar-giros", autenticar, async (req, res) => {
   try {
-    // Apenas Yohanan pode usar
-    if (req.usuario.nome !== "Yohanan") {
-      return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan pode adicionar giros!" });
+    // Apenas Dogue pode usar
+    if (req.usuario.nome !== "Dogue") {
+      return res.status(403).json({ ok: false, mensagem: "❌ Apenas Dogue pode adicionar giros!" });
     }
 
     const { nomeUsuario, quantidade } = req.body;
@@ -1443,19 +1443,19 @@ app.post("/admin/adicionar-giros", autenticar, async (req, res) => {
     usuario.spins = (usuario.spins || 0) + quantidade;
     await usuario.save();
 
-    console.log(`[GIROS-ADMIN] Yohanan adicionou ${quantidade} giros a ${nomeUsuario}`);
+    console.log(`[GIROS-ADMIN] Dogue adicionou ${quantidade} giros a ${nomeUsuario}`);
     res.json({ ok: true, mensagem: `✅ ${quantidade} giro(s) adicionado(s) a ${nomeUsuario}!`, novosGiros: usuario.spins });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
   }
 });
 
-// Adicionar tempo de jogo a um usuário (apenas Yohanan)
+// Adicionar tempo de jogo a um usuário (apenas Dogue)
 app.post("/admin/adicionar-tempo-jogo", autenticar, async (req, res) => {
   try {
-    // Apenas Yohanan pode usar
-    if (req.usuario.nome !== "Yohanan") {
-      return res.status(403).json({ ok: false, mensagem: "❌ Apenas Yohanan pode adicionar tempo de jogo!" });
+    // Apenas Dogue pode usar
+    if (req.usuario.nome !== "Dogue") {
+      return res.status(403).json({ ok: false, mensagem: "❌ Apenas Dogue pode adicionar tempo de jogo!" });
     }
 
     const { nomeUsuario, minutos } = req.body;
@@ -1472,7 +1472,7 @@ app.post("/admin/adicionar-tempo-jogo", autenticar, async (req, res) => {
     usuario.tempo_jogo = (usuario.tempo_jogo || 0) + minutos;
     await usuario.save();
 
-    console.log(`[TEMPO-ADMIN] Yohanan adicionou ${minutos} minutos a ${nomeUsuario}`);
+    console.log(`[TEMPO-ADMIN] Dogue adicionou ${minutos} minutos a ${nomeUsuario}`);
     res.json({ ok: true, mensagem: `✅ ${minutos} minuto(s) de tempo de jogo adicionado(s) a ${nomeUsuario}!`, novoTempo: usuario.tempo_jogo });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
