@@ -71,6 +71,26 @@ const Solicitacao = mongoose.model('Solicitacao', new mongoose.Schema({
   respondidoPor: { type: String, default: null } // quem respondeu
 }));
 
+// Modelo de códigos promocionais
+const CodigoPromocional = mongoose.model('CodigoPromocional', new mongoose.Schema({
+  codigo: { type: String, required: true, unique: true, uppercase: true, trim: true },
+  descricao: { type: String, default: '' },
+  tipoRecompensa: { type: String, enum: ['moedas', 'item', 'spins', 'jogo', 'tempo-jogo'], default: 'moedas' },
+  valor: { type: Number, default: 0 },
+  itemId: { type: String, default: '' },
+  itemNome: { type: String, default: '' },
+  jogoId: { type: String, default: '' },
+  dataExpiracao: { type: Date, default: null },
+  maxUsos: { type: Number, default: 1 },
+  usosAtuais: { type: Number, default: 0 },
+  usoUnicoPorPessoa: { type: Boolean, default: false },
+  ativo: { type: Boolean, default: true },
+  criadoPor: { type: String, required: true },
+  criadoEm: { type: Date, default: Date.now },
+  usadosPor: [{ type: String }],
+  detalhes: { type: Object, default: {} }
+}));
+
 // === MODELOS DE CHAT ===
 // Modelo para Mensagens Globais
 const MensagemGlobal = mongoose.model('MensagemGlobal', new mongoose.Schema({
@@ -401,6 +421,169 @@ app.get("/admin/listar-usuarios", autenticar, verificarAdmin, async (req, res) =
     res.json({ ok: true, usuarios });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro: " + err.message });
+  }
+});
+
+// Criar código promocional (apenas Dogue)
+app.post("/admin/codigos/criar", autenticar, verificarDogue, async (req, res) => {
+  try {
+    const {
+      codigo,
+      descricao,
+      tipoRecompensa,
+      valor,
+      itemId,
+      itemNome,
+      jogoId,
+      dataExpiracao,
+      maxUsos,
+      usoUnicoPorPessoa
+    } = req.body;
+
+    const codigoNormalizado = String(codigo || '').trim().toUpperCase();
+    if (!codigoNormalizado) {
+      return res.status(400).json({ ok: false, mensagem: "Informe um código válido." });
+    }
+
+    const tiposPermitidos = ['moedas', 'item', 'spins', 'jogo', 'tempo-jogo'];
+    if (!tiposPermitidos.includes(tipoRecompensa)) {
+      return res.status(400).json({ ok: false, mensagem: "Tipo de recompensa inválido." });
+    }
+
+    const valorNumero = Number(valor || 0);
+    if (!Number.isFinite(valorNumero) || valorNumero <= 0) {
+      return res.status(400).json({ ok: false, mensagem: "O valor da recompensa precisa ser maior que zero." });
+    }
+
+    if (tipoRecompensa === 'item' && !itemId) {
+      return res.status(400).json({ ok: false, mensagem: "Informe o ID do item para este código." });
+    }
+
+    if (tipoRecompensa === 'jogo' && !jogoId) {
+      return res.status(400).json({ ok: false, mensagem: "Informe o ID do jogo para este código." });
+    }
+
+    const existente = await CodigoPromocional.findOne({ codigo: codigoNormalizado });
+    if (existente) {
+      return res.status(400).json({ ok: false, mensagem: "Este código já existe." });
+    }
+
+    const codigoExpiracao = dataExpiracao ? new Date(dataExpiracao) : null;
+    if (codigoExpiracao && Number.isNaN(codigoExpiracao.getTime())) {
+      return res.status(400).json({ ok: false, mensagem: "Data de expiração inválida." });
+    }
+
+    const novoCodigo = new CodigoPromocional({
+      codigo: codigoNormalizado,
+      descricao: descricao || '',
+      tipoRecompensa,
+      valor: valorNumero,
+      itemId: itemId || '',
+      itemNome: itemNome || itemId || '',
+      jogoId: jogoId || '',
+      dataExpiracao: codigoExpiracao,
+      maxUsos: Math.max(1, Number(maxUsos || 1)),
+      usoUnicoPorPessoa: Boolean(usoUnicoPorPessoa),
+      ativo: true,
+      criadoPor: req.usuario.nome
+    });
+
+    await novoCodigo.save();
+
+    res.json({ ok: true, mensagem: "Código criado com sucesso!", codigo: novoCodigo });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro ao criar código: " + err.message });
+  }
+});
+
+// Listar códigos promocionais (apenas Dogue)
+app.get("/admin/codigos/listar", autenticar, verificarDogue, async (req, res) => {
+  try {
+    const codigos = await CodigoPromocional.find({}).sort({ criadoEm: -1 });
+    res.json({ ok: true, codigos });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro ao listar códigos: " + err.message });
+  }
+});
+
+// Usar código promocional
+app.post("/usar-codigo", autenticar, async (req, res) => {
+  try {
+    const { codigo } = req.body;
+    const codigoNormalizado = String(codigo || '').trim().toUpperCase();
+
+    if (!codigoNormalizado) {
+      return res.status(400).json({ ok: false, mensagem: "Informe um código." });
+    }
+
+    const codigoPromocional = await CodigoPromocional.findOne({ codigo: codigoNormalizado });
+    if (!codigoPromocional) {
+      return res.status(404).json({ ok: false, mensagem: "Código inválido ou não encontrado." });
+    }
+
+    if (!codigoPromocional.ativo) {
+      return res.status(400).json({ ok: false, mensagem: "Este código está desativado." });
+    }
+
+    if (codigoPromocional.dataExpiracao && new Date(codigoPromocional.dataExpiracao) < new Date()) {
+      return res.status(400).json({ ok: false, mensagem: "Este código expirou." });
+    }
+
+    if (codigoPromocional.usosAtuais >= codigoPromocional.maxUsos) {
+      return res.status(400).json({ ok: false, mensagem: "Este código já atingiu o limite de uso." });
+    }
+
+    const usuario = await Usuario.findOne({ nome: req.usuario.nome });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensagem: "Usuário não encontrado." });
+    }
+
+    if (codigoPromocional.usoUnicoPorPessoa && codigoPromocional.usadosPor.includes(req.usuario.nome)) {
+      return res.status(400).json({ ok: false, mensagem: "Você já utilizou este código." });
+    }
+
+    switch (codigoPromocional.tipoRecompensa) {
+      case 'moedas':
+        usuario.moedas += Number(codigoPromocional.valor || 0);
+        break;
+      case 'item':
+        if (!usuario.itensComprados.includes(codigoPromocional.itemId)) {
+          usuario.itensComprados.push(codigoPromocional.itemId);
+        }
+        break;
+      case 'spins':
+        usuario.spins += Number(codigoPromocional.valor || 0);
+        break;
+      case 'jogo':
+        if (!usuario.jogosSecretos.includes(codigoPromocional.jogoId)) {
+          usuario.jogosSecretos.push(codigoPromocional.jogoId);
+        }
+        break;
+      case 'tempo-jogo':
+        usuario.tempo_jogo += Number(codigoPromocional.valor || 0);
+        break;
+    }
+
+    codigoPromocional.usosAtuais += 1;
+    if (!codigoPromocional.usadosPor.includes(req.usuario.nome)) {
+      codigoPromocional.usadosPor.push(req.usuario.nome);
+    }
+
+    await usuario.save();
+    await codigoPromocional.save();
+
+    res.json({
+      ok: true,
+      mensagem: "Código aplicado com sucesso!",
+      recompensa: {
+        tipo: codigoPromocional.tipoRecompensa,
+        valor: codigoPromocional.valor,
+        itemId: codigoPromocional.itemId,
+        jogoId: codigoPromocional.jogoId
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro ao usar código: " + err.message });
   }
 });
 
