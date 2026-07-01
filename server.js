@@ -1274,7 +1274,7 @@ app.get("/itens-comprados", autenticar, async (req, res) => {
   }
 });
 
-// === ENDPOINT PARA OBTER JOGOS SECRETOS ===
+// === ENDPOINT PARA OBTER E SINCRONIZAR JOGOS SECRETOS ===
 app.get("/jogos-secretos", autenticar, async (req, res) => {
   try {
     const usuario = await Usuario.findOne({ nome: req.usuario.nome }, { jogosSecretos: 1, _id: 0 });
@@ -1289,6 +1289,35 @@ app.get("/jogos-secretos", autenticar, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ ok: false, mensagem: "Erro ao obter jogos secretos: " + err.message });
+  }
+});
+
+app.post("/jogos-secretos", autenticar, async (req, res) => {
+  try {
+    const { jogosSecretos } = req.body;
+    const lista = Array.isArray(jogosSecretos)
+      ? jogosSecretos
+          .filter(Boolean)
+          .map(item => String(item).trim())
+          .filter(Boolean)
+      : [];
+
+    const usuario = await Usuario.findOne({ nome: req.usuario.nome });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensagem: "Usuário não encontrado!" });
+    }
+
+    const listaUnica = [...new Set([...(usuario.jogosSecretos || []), ...lista])];
+    usuario.jogosSecretos = listaUnica;
+    await usuario.save();
+
+    res.json({
+      ok: true,
+      mensagem: "Jogos secretos sincronizados com sucesso!",
+      jogosSecretos: usuario.jogosSecretos || []
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensagem: "Erro ao sincronizar jogos secretos: " + err.message });
   }
 });
 
